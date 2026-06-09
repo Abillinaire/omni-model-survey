@@ -1,0 +1,486 @@
+%%%%%%%% ICML 2026 — Omni-Modal LLM Survey %%%%%%%%%%%%%%%%%
+
+\documentclass{article}
+
+% Recommended packages
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+% Attempt to make hyperref and algorithmic work together better:
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Blind submission version
+\usepackage{icml2026}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage[capitalize,noabbrev]{cleveref}
+
+% Todonotes for development
+\usepackage[textsize=tiny]{todonotes}
+
+% Short running title
+\icmltitlerunning{Omni-Modal LLMs: A Comprehensive Survey}
+
+\begin{document}
+
+\twocolumn[
+  \icmltitle{Omni-Modal Large Language Models: \\
+    A Comprehensive Survey on Architecture, Training, and Evaluation}
+
+  \begin{icmlauthorlist}
+    \icmlauthor{Anonymous}{yyy}
+  \end{icmlauthorlist}
+
+  \icmlaffiliation{yyy}{Anonymous Institution}
+
+  \icmlkeywords{Omni-modal models, multimodal LLMs, survey, architecture, training, evaluation}
+
+  \vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+% ============================================================
+\section{Abstract}
+% ============================================================
+\begin{abstract}
+We present the first comprehensive survey of omni-modal large language models organized around a novel full-lifecycle taxonomy.
+While recent years have witnessed an explosion of models capable of jointly processing text, image, audio, and video---exemplified by GPT-4o, Gemini, Qwen3.5-Omni, and ByteDance Seed's Omni---existing surveys focus on narrow aspects such as individual architectural components or training stage decomposition, leaving a fragmented picture of the field.
+We bridge this gap by introducing a unified framework that structures the literature along six interconnected dimensions spanning three lifecycle stages: \emph{Build} (Architecture, Training), \emph{Assess} (Capabilities, Evaluation, Safety), and \emph{Apply} (Agents and Deployment).
+Through systematic analysis of over 60 recent papers spanning architecture, training, capabilities, evaluation, safety, and agentic applications, we provide structured comparison tables, a unified taxonomy, and an integrated perspective on how architectural choices interact with training strategies, evaluation protocols, and safety mechanisms.
+We identify ten critical open challenges---including the lack of truly unified architectures, modality imbalance in training data, the immaturity of omni-modal evaluation benchmarks, and unresolved safety risks across modalities---and propose concrete research directions for each.
+We hope this survey serves as both an accessible entry point for newcomers and a structured roadmap for advancing the field.
+\end{abstract}
+
+% ============================================================
+\section{Introduction}
+% ============================================================
+\label{sec:intro}
+
+The rapid evolution from uni-modal deep learning models to large language models (LLMs) and subsequently to multimodal large language models (MLLMs) has fundamentally reshaped artificial intelligence research.
+Within the span of roughly two years, the frontier has shifted from vision-language models~\cite{liu2024llava,li2023blip2}---primarily handling text and image---to \emph{omni-modal} models that jointly perceive, reason over, and generate across text, image, audio, video, and beyond~\cite{openai2024gpt4o,google2024gemini,qwen2026omni,seed2026omni}.
+This transition carries profound implications: a model that can fluidly operate across all sensory modalities mirrors human-like perception more closely than any prior AI system, and unlocks applications ranging from real-time multimodal assistants to embodied agents that see, hear, and act in the physical world.
+
+Yet the research community lacks a unified framework for understanding this rapidly expanding field.
+The most closely related survey, ``From Specific-MLLMs to Omni-MLLMs''~\cite{song2024omnimllms}, organizes the literature around four core components (modality encoder, LLM backbone, modality generator, and modality alignment) and a two-stage training pipeline.
+While valuable, this component-centric taxonomy overlooks critical cross-cutting dimensions: how training strategies interact with architectural design, how evaluation protocols influence capability assessment, and how safety mechanisms must adapt to the omni-modal setting.
+Several other surveys cover adjacent territories---multimodal alignment and fusion~\cite{li2024multimodalalignment}, model architectures~\cite{wu2024evolution}, large multimodal reasoning~\cite{liu2025multimodalreasoning}, and spoken dialogue models~\cite{wang2024wavchat}---but none provide the end-to-end lifecycle perspective that the field now requires.
+
+\textbf{Our contribution.}
+This survey bridges the gap by introducing the first \emph{full-lifecycle taxonomy} for omni-modal LLMs.
+Our framework organizes the field into six dimensions across three stages:
+\begin{enumerate}
+    \item \textbf{Build}: How are omni-modal models constructed? We survey \emph{architecture design} (modality tokenization, fusion mechanisms, generation architectures) and \emph{training methodology} (pre-training strategies, modality alignment, efficient training, post-training).
+    \item \textbf{Assess}: How do we measure and govern their capabilities? We cover \emph{understanding and generation capabilities}, \emph{evaluation benchmarks}, and \emph{safety and alignment} mechanisms.
+    \item \textbf{Apply}: How do these models act in the world? We examine the emerging landscape of \emph{omni-modal agents} and practical deployment considerations.
+\end{enumerate}
+
+Specifically, this survey makes the following contributions:
+\begin{itemize}
+    \item We propose a novel full-lifecycle taxonomy that organizes omni-modal LLM research along Build--Assess--Apply stages, providing a more comprehensive and practically useful framework than existing component-centric surveys.
+    \item We systematically review over 60 papers published through mid-2026, capturing the latest developments---including GPT-4o, Gemini 2.0/2.5, Qwen3.5-Omni~\cite{qwen2026omni}, ByteDance Seed's Omni with Context Unrolling~\cite{seed2026omni}, Cosmos~3~\cite{nvidia2026cosmos3}, LatentOmni, DuplexOmni, GuardReasoner-Omni, and emerging omni-agent systems---that postdate prior surveys.
+    \item We provide structured comparison tables across all six taxonomy dimensions, enabling researchers to quickly situate new work within the broader landscape and identify under-explored areas.
+    \item We identify ten open challenges---ranging from the absence of a unified omni-modal evaluation suite to unresolved cross-modal safety risks---and propose concrete, actionable research directions for each.
+\end{itemize}
+
+\textbf{Paper organization.}
+Section~\ref{sec:background} establishes preliminaries and contrasts our survey with existing ones.
+Section~\ref{sec:taxonomy} presents our full-lifecycle taxonomy in detail.
+Sections~\ref{sec:architecture}--\ref{sec:agents} systematically survey each dimension of the framework.
+Section~\ref{sec:datasets} catalogs datasets and open resources.
+Section~\ref{sec:challenges} identifies open challenges and future directions.
+Section~\ref{sec:conclusion} concludes.
+
+% ============================================================
+\section{Background and Preliminaries}
+% ============================================================
+\label{sec:background}
+
+\subsection{From Unimodal to Omni-Modal}
+
+% (Detailed writing to follow in next iteration — tracing the evolution:
+%  single modality → vision-language → multi-modal → omni-modal)
+
+The progression of multimodal AI can be characterized by the number and breadth of modalities a single model can handle.
+Early multimodal systems operated on fixed modality pairs, typically vision and language~\cite{radford2021clip,li2023blip2,liu2024llava}.
+The subsequent wave expanded to three or more modalities by incorporating audio~\cite{ghosal2023speechgpt,deshmukh2023pengi}, video understanding~\cite{lin2023videollava,zhang2023videochat}, or both~\cite{zhan2024anygpt,wu2024nextgpt,su2023pandagpt}.
+The current frontier---\emph{omni-modal models}---targets joint perception, reasoning, and generation across text, image, audio, and video within a single unified architecture~\cite{openai2024gpt4o,google2024gemini,qwen2026omni,jiang2024chameleon,seed2026omni}.
+Most recently, models such as Qwen3.5-Omni~\cite{qwen2026omni} scale to hundreds of billions of parameters with 256K context and achieve SOTA on 215 audio-visual benchmarks, while ByteDance Seed's Omni~\cite{seed2026omni} introduces \emph{Context Unrolling}---explicit cross-modal reasoning across text, images, video, 3D geometry, and hidden representations before producing predictions.
+Concurrently, the community has produced a rapid succession of innovations in efficient tokenization~\cite{placeholder2026latentomni,placeholder2026omnidrop}, quantization~\cite{placeholder2025morphoquant}, real-time full-duplex interaction~\cite{placeholder2026duplexomni}, streaming video understanding~\cite{placeholder2026streamov}, and omni-modal agents~\cite{placeholder2026oscar,placeholder2026sandboxagent,nvidia2026cosmos3}. This explosive growth motivates the need for a structured survey that organizes the literature in a coherent, actionable framework.
+
+\subsection{Key Definitions}
+
+We define the following terms for clarity throughout this survey:
+\begin{itemize}
+    \item \textbf{Multi-modal model}: A model that processes two or more modalities, typically with separate encoders and a shared representation space.
+    \item \textbf{Omni-modal model}: A model capable of jointly processing and/or generating text, image, audio, and video within a unified framework, supporting arbitrary modality combinations as input and output (any-to-any).
+    \item \textbf{Modality alignment}: The process of mapping representations from different modalities into a shared embedding space, enabling cross-modal interaction.
+    \item \textbf{Any-to-any generation}: The capability to generate content in any supported modality given input in any modality.
+\end{itemize}
+
+\subsection{Comparison with Existing Surveys}
+
+\begin{table}[t]
+\centering
+\caption{Comparison of this survey with existing multimodal surveys. \checkmark{} = covered; $\circ$ = partially covered; $\times$ = not covered.}
+\label{tab:survey-comparison}
+\begin{tabular}{lcccccc}
+\toprule
+Survey & Arch. & Train. & Capab. & Eval. & Safety & Agent \\
+\midrule
+Omni-MLLMs~\cite{song2024omnimllms} & \checkmark & $\circ$ & \checkmark & $\circ$ & $\times$ & $\times$ \\
+Architecture Evolution~\cite{wu2024evolution} & \checkmark & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ \\
+Alignment \& Fusion~\cite{li2024multimodalalignment} & $\circ$ & \checkmark & $\times$ & $\times$ & $\times$ & $\times$ \\
+MLLM Meta-Review~\cite{yang2024surveying} & \checkmark & $\circ$ & \checkmark & \checkmark & $\times$ & $\times$ \\
+WavChat~\cite{wang2024wavchat} & $\circ$ & $\times$ & $\circ$ & $\times$ & $\times$ & $\times$ \\
+\textbf{Ours} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:survey-comparison} systematically compares our survey with existing work.
+Our survey is the first to provide integrated coverage across all six dimensions of the omni-modal lifecycle.
+
+% ============================================================
+\section{Taxonomy and Framework Overview}
+% ============================================================
+\label{sec:taxonomy}
+
+% (Framework diagram: Figure 1 — Build → Assess → Apply with 6 dimensions)
+
+We propose a \emph{full-lifecycle taxonomy} that organizes omni-modal LLM research into three sequential stages, each encompassing two core dimensions:
+
+\paragraph{Stage 1: Build.}
+This stage addresses the foundational question of \emph{how} to construct an omni-modal model.
+\begin{itemize}
+    \item \textbf{Architecture} (Section~\ref{sec:architecture}): Modality tokenization, encoder/decoder design, fusion mechanisms, generation architectures, and system-level considerations.
+    \item \textbf{Training Methodology} (Section~\ref{sec:training}): Pre-training strategies, modality alignment, efficient training techniques, and post-training refinement.
+\end{itemize}
+
+\paragraph{Stage 2: Assess.}
+This stage addresses \emph{what} the model can do and \emph{whether} it is safe to deploy.
+\begin{itemize}
+    \item \textbf{Capabilities} (Section~\ref{sec:capabilities}): Cross-modal understanding, any-to-any generation, and real-time interaction.
+    \item \textbf{Evaluation} (Section~\ref{sec:evaluation}): Understanding and generation benchmarks, omni-specific evaluation challenges, and comprehensive assessment frameworks.
+    \item \textbf{Safety \& Alignment} (Section~\ref{sec:safety}): Multimodal jailbreak attacks, guardrail mechanisms, and cross-modal value alignment.
+\end{itemize}
+
+\paragraph{Stage 3: Apply.}
+This stage addresses \emph{where} omni-modal models are deployed and how they interact with the world.
+\begin{itemize}
+    \item \textbf{Omni-Modal Agents} (Section~\ref{sec:agents}): Agentic omni perception, tool-augmented reasoning, world models, and embodied AI.
+\end{itemize}
+
+A sixth cross-cutting dimension---\textbf{Datasets \& Resources} (Section~\ref{sec:datasets})---supports all three stages.
+
+This taxonomy differs fundamentally from prior work: rather than decomposing models by their internal components, we organize the literature by the \emph{lifecycle questions} that researchers and practitioners actually face---how to build, how to assess, and how to deploy omni-modal systems.
+
+% ============================================================
+\section{Architecture}
+% ============================================================
+\label{sec:architecture}
+
+The architecture of an omni-modal LLM must solve a fundamental challenge: how to ingest, represent, fuse, and generate across fundamentally different signal types---discrete text tokens, continuous image pixels, time-varying audio waveforms, and spatiotemporal video frames---within a single unified model.
+We organize our survey of architectural paradigms along five dimensions: modality tokenization, encoder/decoder design, fusion mechanisms, generation architectures, and system-level considerations.
+
+\subsection{Modality Tokenization}
+
+Tokenization transforms raw modality signals into a representation suitable for transformer-based processing.
+The central trade-off is between modality-specific tokenizers optimized for each signal type and unified tokenizers that map all modalities into a shared vocabulary.
+
+\paragraph{Image tokenization.}
+Images are predominantly tokenized via two paradigms.
+\emph{Continuous patch embeddings}, popularized by ViT~\cite{dosovitskiy2021vit}, divide an image into fixed-size patches and project each through a learned linear layer, producing a sequence of continuous vectors.
+This approach is used by most vision-language models~\cite{liu2024llava,li2023blip2} and remains the default for the vision encoder in omni-modal systems such as GPT-4o and Gemini~\cite{google2024gemini}.
+\emph{Discrete visual tokens}, based on vector quantization (e.g., VQ-VAE~\cite{van2017vqvae}, VQGAN), map image patches to indices in a learned codebook, converting images into a ``visual language'' that can be processed by the same autoregressive transformer as text.
+Chameleon~\cite{jiang2024chameleon} adopts this approach, tokenizing images into discrete tokens and interleaving them with text tokens for native multimodal generation.
+
+\paragraph{Audio tokenization.}
+Audio processing faces a distinct challenge: the high temporal resolution of raw waveforms (typically 16--48 kHz) necessitates aggressive compression.
+Two dominant strategies have emerged.
+\emph{Spectrogram-based} approaches~\cite{radford2023whisper} convert audio to log-mel spectrograms and process them through a convolutional encoder, producing continuous representations.
+\emph{Neural audio codecs} such as EnCodec~\cite{defossez2022encodec} and SoundStream compress audio into discrete tokens at low bitrates (1.5--24 kbps), enabling autoregressive audio generation.
+Qwen3.5-Omni~\cite{qwen2026omni} employs a hybrid approach, using separate tokenization pathways for semantic understanding and acoustic generation, bridged by their ARIA alignment mechanism for streaming speech synthesis.
+
+\paragraph{Video tokenization.}
+Video introduces the additional dimension of time.
+Common strategies include \emph{3D patch extraction} (dividing video into spatiotemporal cubes), \emph{frame-level processing} (treating video as a sequence of images, as in Video-LLaVA~\cite{lin2023videollava}), and \emph{learned temporal aggregation} that compresses frame sequences into compact representations.
+Gemini~\cite{google2024gemini} processes video natively through its multimodal encoder, while Qwen3.5-Omni~\cite{qwen2026omni} supports up to 400 seconds of 720P video at 1 FPS via efficient temporal sampling.
+
+\paragraph{Unified tokenization.}
+An emerging research direction asks whether a single tokenizer can serve all modalities.
+Chameleon~\cite{jiang2024chameleon} demonstrates early success by tokenizing both images and text into a shared discrete vocabulary, enabling mixed-modal autoregressive generation.
+ByteDance Seed's Omni~\cite{seed2026omni} pushes further by natively training on text, images, videos, 3D geometry, and \emph{hidden representations}---internal neural states from other models---treating diverse signal types within a unified representational framework.
+LatentOmni~\cite{placeholder2026latentomni} explores unified audio-visual latent reasoning, while Conan-embedding-v3~\cite{placeholder2026conan} fuses modality-specific models into omni-modal embeddings.
+Unified tokenization promises architectural simplicity but introduces tension between modality-specific compression efficiency and cross-modal vocabulary coherence.
+
+\subsection{Modality Encoders and Decoders}
+
+Beyond tokenization, dedicated encoders extract semantically meaningful features from each modality before passing them to the LLM backbone.
+Decoder modules perform the reverse operation for generation.
+
+\paragraph{Encoder architectures.}
+Most omni-modal models adopt modality-specific encoders: a ViT-based vision encoder for images~\cite{dosovitskiy2021vit}, a convolutional or Transformer-based audio encoder for speech and sound~\cite{radford2023whisper}, and a video encoder built upon spatial and temporal attention.
+The design choices revolve around (1) whether encoders are \emph{frozen} (preserving pre-trained representations, as in BLIP-2's Q-Former~\cite{li2023blip2}) or \emph{fine-tuned} (allowing modality-specific adaptation), and (2) whether encoders are \emph{independent} or \emph{co-trained} with the LLM backbone.
+Recent models increasingly favor co-training: Qwen3.5-Omni~\cite{qwen2026omni} jointly optimizes its vision and audio encoders with the core LLM, while Gemini~\cite{google2024gemini} is trained end-to-end as a multimodal model from the start.
+
+\paragraph{Decoder architectures.}
+For generation, decoders map latent representations back to modality-specific outputs.
+Text generation relies on the LLM's native token decoder.
+Image generation typically employs a diffusion-based decoder (e.g., Stable Diffusion-style UNet) or an autoregressive discrete token decoder.
+Audio generation uses neural vocoders (e.g., HiFi-GAN) or codec-based decoders that convert discrete audio tokens back to waveforms.
+Qwen3.5-Omni's Talker module~\cite{qwen2026omni} incorporates a Hybrid Attention MoE architecture for efficient speech generation, with the ARIA mechanism dynamically synchronizing text and speech units to reduce latency and improve prosody in streaming synthesis.
+A key architectural decision is the \emph{generation granularity}: models may generate in a single target modality, support \emph{any-to-any} generation (e.g., NExT-GPT~\cite{wu2024nextgpt}), or produce multiple modalities simultaneously.
+
+\subsection{Fusion Mechanisms}
+
+Modality fusion determines how information from different modalities interacts within the model.
+We identify four predominant paradigms:
+
+\paragraph{Cross-attention fusion.}
+Cross-attention layers insert modality-specific information into the LLM by attending from text representations to encoded modality features.
+BLIP-2's Q-Former~\cite{li2023blip2} exemplifies this approach, using a learnable query transformer to extract visual features relevant to the language model.
+This paradigm is lightweight---modality encoders can remain frozen---but limits deep cross-modal interaction to designated attention layers.
+
+\paragraph{Q-Former and Perceiver-based fusion.}
+Q-Former and Perceiver architectures compress modality features into a fixed-size set of learned queries, decoupling the modality encoder from the LLM and controlling the number of visual tokens.
+This is particularly important for video (where raw frame tokens would exceed context windows) and for efficiency-sensitive deployments.
+Flamingo and its successors popularized this approach with Perceiver Resamplers.
+
+\paragraph{Native multimodal attention.}
+The most integrated paradigm allows all modality tokens to interact through the same self-attention mechanism.
+Chameleon~\cite{jiang2024chameleon} achieves this by tokenizing images into discrete tokens and interleaving them with text in a single sequence, enabling token-level cross-modal attention throughout all transformer layers.
+Gemini~\cite{google2024gemini} employs a similar early-fusion design, processing interleaved multimodal sequences natively.
+This approach maximizes cross-modal interaction but demands that all modalities share a compatible representation format.
+
+\paragraph{Hybrid attention with modality-specific routing.}
+Recent large-scale omni models introduce modality-aware attention mechanisms.
+Qwen3.5-Omni~\cite{qwen2026omni} employs a Hybrid Attention Mixture-of-Experts (MoE) framework for both its Thinker (understanding) and Talker (generation) modules, enabling efficient long-sequence inference by routing tokens through modality-specialized expert sub-networks.
+ByteDance Seed's Omni~\cite{seed2026omni} introduces \emph{Context Unrolling}: rather than fusing modalities into a single representation, the model explicitly reasons \emph{across} multiple modal representations sequentially, aggregating complementary information from text, images, video, 3D, and hidden states before producing a prediction.
+This represents a departure from traditional fusion toward a more deliberative, multi-step cross-modal reasoning process.
+
+\subsection{Generation Architectures}
+
+Omni-modal generation spans text, image, audio, and video outputs, each with distinct architectural requirements.
+
+\paragraph{Autoregressive discrete token generation.}
+Models that discretize all modalities into a shared token vocabulary can generate any modality through a unified autoregressive process.
+Chameleon~\cite{jiang2024chameleon} and the Gemininative generation pipeline exemplify this approach.
+The advantage is architectural uniformity---a single transformer generates all modalities---at the cost of discretization artifacts and large token sequences for high-resolution outputs.
+
+\paragraph{Diffusion-based generation.}
+For continuous modalities (images, audio, video), diffusion models dominate generation quality.
+Most omni models that generate images or video employ latent diffusion models (e.g., Stable Diffusion) conditioned on text embeddings from the LLM.
+This decouples the LLM (which provides semantic conditioning) from the generation backbone (which produces high-fidelity outputs), enabling each component to scale independently.
+
+\paragraph{Hybrid generation pipelines.}
+Practical omni models often combine multiple generation paradigms.
+GPT-4o generates text and speech autoregressively but uses a separate image generation pipeline.
+Qwen3.5-Omni~\cite{qwen2026omni} generates text and speech within its unified Thinker-Talker framework, with the ARIA mechanism ensuring natural prosody and low latency in streaming speech.
+The trend is toward tighter integration: reducing the gap between semantic understanding and perceptual generation to enable more natural, responsive multimodal interaction.
+
+\paragraph{Any-to-any generation.}
+A defining capability of omni models is supporting arbitrary modality combinations in both input and output.
+NExT-GPT~\cite{wu2024nextgpt} and AnyGPT~\cite{zhan2024anygpt} are early examples of any-to-any architectures, connecting modality-specific encoders and decoders through a shared LLM core.
+FlowInOne~\cite{placeholder2026flowinone} unifies multimodal generation as image-in, image-out flow matching, while Dynin-Omni~\cite{placeholder2026dyninomni} explores unified diffusion language models for omnimodal generation.
+For video and audio, Foley-Omni~\cite{placeholder2026foleyomni} demonstrates unified generation from task-level audio synthesis to complete video soundtracks, and inference-time scaling for joint audio-video generation~\cite{placeholder2026infertimescale} further improves output quality.
+Fully unified any-to-any generation---where the same architecture handles all modality pairs without modality-specific modules---remains an open research challenge.
+
+\subsection{System-Level Design}
+
+At scale, omni-modal models face system-level challenges distinct from text-only LLMs.
+
+\paragraph{Mixture-of-Experts for multi-modality.}
+MoE architectures~\cite{qwen2026omni} are particularly well-suited to omni models: different modalities naturally exhibit different activation patterns, making sparse expert routing an efficient strategy.
+Qwen3.5-Omni's Hybrid Attention MoE enables the model to scale to hundreds of billions of parameters while maintaining tractable inference costs for long multimodal sequences (256K context).
+
+\paragraph{Inference efficiency.}
+Omni-modal inference is significantly more expensive than text-only inference due to the computational cost of encoding high-dimensional signals (images, audio, video) and generating in continuous modalities.
+Techniques including KV-cache optimization, modality-aware batching, speculative decoding for multimodal tokens, and quantization (e.g., MorphoQuant~\cite{placeholder2025morphoquant} for omni-modal PTQ) are active research areas.
+Complementary approaches reduce token counts directly: OmniDrop~\cite{placeholder2026omnidrop} performs layer-wise token pruning guided by query relevance, while Stage-adaptive Token Selection~\cite{placeholder2026stageadaptive} dynamically adjusts token budgets across processing stages.
+O-MARC~\cite{placeholder2026omarc} applies memory-augmented compression distillation for efficient video understanding, and StreamOV~\cite{placeholder2026streamov} enables streaming omni-video understanding through evidence-guided memory and response triggering.
+
+\paragraph{Streaming and real-time constraints.}
+Real-time omni interaction (e.g., spoken dialogue, live video understanding) imposes strict latency requirements.
+Qwen3.5-Omni's ARIA mechanism addresses the encoding efficiency gap between text and speech tokenizers by dynamically aligning text-speech units, achieving natural prosody with minimal latency impact.
+Models supporting over 10 hours of audio understanding~\cite{qwen2026omni} require efficient streaming attention mechanisms and intelligent context window management.
+
+\paragraph{Training infrastructure.}
+Training omni models at scale requires heterogeneous data pipelines spanning text corpora, image-text pairs, audio-visual content (Qwen3.5-Omni uses over 100 million hours), and multimodal interleaved data.
+The coordination of modality-specific pre-training, multi-stage alignment, and joint optimization across different data distributions presents significant engineering challenges that we address in Section~\ref{sec:training}.
+
+% ============================================================
+\section{Training Methodology}
+% ============================================================
+\label{sec:training}
+
+Training omni-modal LLMs presents challenges that go well beyond those of text-only or even vision-language models: heterogeneous data sources spanning fundamentally different signal types, modality-specific convergence dynamics, the risk of catastrophic forgetting across modalities, and the sheer scale of multi-modal datasets.
+We organize training strategies along four stages: pre-training, modality alignment, efficient training, and post-training refinement.
+
+\subsection{Pre-training Strategies}
+
+Pre-training an omni-modal model requires reconciling multiple modalities within a single optimization process.
+The central challenge is \emph{data heterogeneity}: text corpora, image-text pairs, audio recordings, video streams, and interleaved multimodal documents each follow distinct distributions, tokenization schemes, and information densities.
+
+\paragraph{Data mixture and sampling.}
+Determining the optimal ratio of modalities during pre-training is a critical and under-explored design decision.
+Most leading omni models train on massive heterogeneous datasets: Qwen3.5-Omni~\cite{qwen2026omni} leverages over 100 million hours of audio-visual content alongside text-vision pairs, while Gemini~\cite{google2024gemini} is trained on a multimodal corpus spanning text, images, audio, and video from the outset.
+ByteDance Seed's Omni~\cite{seed2026omni} takes a distinctive approach by including \emph{hidden representations}---internal neural states from pre-trained models---as an additional training modality, enabling the model to leverage complementary information encoded in other networks' latent spaces.
+Common strategies include \emph{modality-balanced sampling} (ensuring each modality contributes proportionally to the training objective), \emph{temperature-based mixing} (varying modality ratios over the course of training), and \emph{curriculum learning} (introducing modalities gradually, from simpler to more complex combinations).
+
+\paragraph{Training objectives.}
+Omni-modal pre-training typically combines multiple loss functions.
+The dominant paradigm is \emph{next-token prediction} over interleaved multimodal sequences, where images, audio, and video are tokenized and concatenated with text tokens into a unified autoregressive stream~\cite{jiang2024chameleon,google2024gemini}.
+This is often supplemented with \emph{cross-modal contrastive losses} that pull paired modality representations together in embedding space (inherited from CLIP-style training~\cite{radford2021clip}), and \emph{generation losses} (e.g., diffusion loss for image outputs, vocoder loss for audio) for models that produce continuous modality outputs.
+Qwen3.5-Omni~\cite{qwen2026omni} employs separate objective formulations for its Thinker (understanding) and Talker (generation) modules, reflecting the asymmetric complexity of consuming versus producing different modalities.
+
+\paragraph{Training stability and modality imbalance.}
+A persistent challenge is \emph{modality competition}: during joint training, the dominant modality (usually text) can suppress learning in weaker modalities.
+This manifests as uneven convergence rates across modalities, with text performance improving rapidly while audio or video understanding lags.
+Techniques to address this include \emph{modality-specific learning rates}, \emph{gradient scaling} per modality, and \emph{modality dropout} (randomly dropping modalities during training to prevent over-reliance on any single one).
+Entrain~\cite{placeholder2026entrain} addresses a related systems challenge: the inherent heterogeneity of multimodal data makes it difficult to balance distributed training workloads across both modalities and batches, requiring modality-aware load balancing.
+
+\subsection{Modality Alignment}
+
+Once pre-trained, omni-modal models must align their modality-specific representations to enable seamless cross-modal interaction.
+Alignment strategies can be characterized by \emph{when} and \emph{how} alignment occurs.
+
+\paragraph{Two-stage alignment.}
+The most common paradigm, inherited from vision-language models, separates training into a \emph{pre-training stage} (where modality encoders are aligned to the LLM's embedding space) and an \emph{instruction tuning stage} (where the full model is fine-tuned on multimodal instruction-following data).
+BLIP-2~\cite{li2023blip2} popularized this with its Q-Former, which is first trained to extract visual features relevant to a frozen LLM, then fine-tuned end-to-end.
+This decoupling is computationally efficient but creates a structural bottleneck: the LLM never directly observes raw modality signals, limiting the depth of cross-modal understanding.
+
+\paragraph{End-to-end joint training.}
+Increasingly, state-of-the-art omni models adopt end-to-end training from the start.
+Gemini~\cite{google2024gemini} and Chameleon~\cite{jiang2024chameleon} are trained as natively multimodal models, with all parameters jointly optimized on interleaved multimodal data.
+Qwen3.5-Omni~\cite{qwen2026omni} jointly optimizes vision and audio encoders alongside the core LLM, enabling deeper cross-modal integration at the cost of increased training complexity.
+ByteDance Seed's Omni~\cite{seed2026omni} pushes joint training further by co-training on modalities that include not only raw signals but also abstract representations, enabling the model to discover cross-modal correspondences that would be invisible in separate training stages.
+
+\paragraph{Modality-by-modality alignment.}
+Some approaches align modalities incrementally: first vision-language, then audio, then video, progressively expanding the model's modality coverage.
+While simpler to implement and debug, this risks \emph{catastrophic forgetting}: later modality alignment can overwrite capabilities acquired earlier.
+PandaGPT~\cite{su2023pandagpt} and NExT-GPT~\cite{wu2024nextgpt} exemplify modality-by-modality expansion strategies, connecting pre-trained modality-specific modules through a shared LLM core.
+SMA~\cite{placeholder2026sma} introduces a \emph{submodular modality aligner} that selects the most informative modality pairs for alignment, improving data efficiency in low-resource settings by going beyond instance-level alignment to leverage the underlying structure of multimodal data.
+
+\subsection{Efficient Training}
+
+Training omni-modal models at scale---hundreds of billions of parameters, millions of hours of multimodal data---demands specialized efficiency techniques.
+
+\paragraph{Modality-aware parallelism.}
+Distributed training of omni models introduces challenges beyond standard LLM training.
+Different modalities have vastly different computational profiles: encoding a high-resolution image requires orders of magnitude more FLOPs than processing a text token, while video introduces temporal dependencies that complicate batch construction.
+Entrain~\cite{placeholder2026entrain} tackles this by chunking and reordering multimodal data to balance workloads across GPUs, accounting for sample-level entanglement between modalities.
+Qwen3.5-Omni's Hybrid Attention MoE~\cite{qwen2026omni} enables sparse activation during training: modality-specific tokens are routed through specialized expert sub-networks, reducing the effective computational cost per token while maintaining model capacity.
+
+\paragraph{Parameter-efficient fine-tuning.}
+For researchers and practitioners without access to industrial-scale compute, parameter-efficient fine-tuning (PEFT) methods---LoRA, QLoRA, adapter layers---are essential for adapting pre-trained omni models to new tasks or modalities.
+However, standard PEFT methods designed for text-only LLMs may not transfer trivially to omni settings, where different modalities benefit from different adapter placements and ranks.
+
+\paragraph{Quantization and compression.}
+Post-training quantization (PTQ) for omni models faces unique challenges due to the extreme distribution heterogeneity across modalities.
+MorphoQuant~\cite{placeholder2025morphoquant} addresses this with modality-aware quantization, observing that conventional PTQ methods struggle at 4-bit precision for omni-modal LLMs due to disparate outlier patterns across modalities.
+Complementary to quantization, token reduction techniques---OmniDrop~\cite{placeholder2026omnidrop} (layer-wise pruning) and Stage-adaptive Token Selection~\cite{placeholder2026stageadaptive} (dynamic token budgets)---reduce the number of tokens processed, directly lowering inference cost without model modification.
+
+\subsection{Post-training}
+
+Post-training refinement---supervised fine-tuning (SFT), reinforcement learning from human feedback (RLHF), and related techniques---is critical for aligning omni models with user intent and improving output quality across modalities.
+
+\paragraph{Staged post-training.}
+Recent work on staged post-training for omni-modal models~\cite{placeholder2026stagedposttraining} demonstrates that a carefully sequenced post-training pipeline---instruction tuning followed by visually debiased evaluation and targeted refinement---substantially improves genuine multimodal integration.
+A key insight is that standard benchmarks may overstate omni-modal capabilities because visual shortcuts can answer many queries without genuine audio-visual-language integration.
+Debiased evaluation reveals that post-training must explicitly enforce cross-modal evidence integration rather than allowing the model to rely on the strongest single modality.
+
+\paragraph{RL post-training and modality collapse.}
+Applying standard RL post-training algorithms (e.g., GRPO) to omni models exposes a critical vulnerability: \emph{late-stage modality collapse}~\cite{placeholder2026escapelanguage}.
+Because RL algorithms like GRPO apply uniform policy gradients across all tokens---ignoring that different tokens depend unequally on non-text modalities---the optimization process can systematically suppress audio and visual reasoning in favor of text-only shortcuts.
+Modality-aware policy optimization, which scales gradients according to each token's dependence on non-text sources, has been proposed as a remedy.
+
+\paragraph{Alignment across modalities.}
+Cross-modal alignment in the post-training phase extends beyond instruction following to encompass safety, factuality, and stylistic consistency across generated modalities.
+OmniTrace~\cite{placeholder2026omnitrace} introduces a unified framework for generation-time attribution in omni-modal LLMs, identifying which input sources (text, image, audio, video) support each generated statement---a critical capability for verifying factual accuracy in multimodal outputs.
+Partial Information Decomposition (PID)~\cite{placeholder2026pid} provides a complementary lens: a decision-level framework that separates the unique, redundant, and synergistic contributions of sensory and linguistic inputs, revealing that much of what appears to be multimodal reasoning may actually be driven by a single dominant modality.
+These diagnostic tools are essential for ensuring that post-training genuinely improves omni-modal capabilities rather than masking unimodal shortcuts.
+
+% ============================================================
+\section{Capabilities}
+% ============================================================
+\label{sec:capabilities}
+
+\subsection{Cross-Modal Understanding}
+
+\subsection{Any-to-Any Generation}
+
+\subsection{Real-Time Interaction}
+
+% ============================================================
+\section{Evaluation}
+% ============================================================
+\label{sec:evaluation}
+
+\subsection{Understanding Benchmarks}
+
+\subsection{Generation Benchmarks}
+
+\subsection{Toward Comprehensive Omni Evaluation}
+
+% ============================================================
+\section{Safety and Alignment}
+% ============================================================
+\label{sec:safety}
+
+\subsection{Multimodal Jailbreak and Attacks}
+
+\subsection{Guardrails for Omni-Modal Models}
+
+\subsection{Cross-Modal Value Alignment}
+
+% ============================================================
+\section{Omni-Modal Agents}
+% ============================================================
+\label{sec:agents}
+
+\subsection{Agentic Omni Perception}
+
+\subsection{World Models}
+
+\subsection{Embodied AI}
+
+% ============================================================
+\section{Datasets and Resources}
+% ============================================================
+\label{sec:datasets}
+
+% (Catalog of training datasets, benchmarks, open-source models)
+
+% ============================================================
+\section{Challenges and Future Directions}
+% ============================================================
+\label{sec:challenges}
+
+% (10 open challenges with concrete research directions)
+
+% ============================================================
+\section{Conclusion}
+% ============================================================
+\label{sec:conclusion}
+
+% (Concise summary of contributions and outlook)
+
+% ============================================================
+% Acknowledgments
+% ============================================================
+% (To be added)
+
+% ============================================================
+% Bibliography
+% ============================================================
+\bibliography{main}
+\bibliographystyle{icml2026}
+
+\end{document}
