@@ -412,11 +412,80 @@ These diagnostic tools are essential for ensuring that post-training genuinely i
 % ============================================================
 \label{sec:capabilities}
 
+The capabilities of omni-modal LLMs span a wide spectrum---from understanding complex multimodal inputs, to generating content in any target modality, to engaging in fluid real-time interaction.
+We structure our survey of capabilities along three axes: cross-modal understanding, any-to-any generation, and real-time interaction.
+
 \subsection{Cross-Modal Understanding}
+
+Cross-modal understanding refers to the ability to jointly reason over information distributed across text, images, audio, and video.
+This goes beyond processing each modality independently: the model must integrate complementary signals that may be temporally misaligned, semantically redundant, or subtly contradictory.
+
+\paragraph{Audio-visual-language understanding.}
+The most mature capability axis is joint understanding of vision, audio, and text.
+Qwen3.5-Omni~\cite{qwen2026omni} achieves state-of-the-art results on 215 audio and audio-visual understanding, reasoning, and interaction benchmarks, surpassing Gemini 3.1 Pro on key audio tasks.
+AVI-Bench~\cite{placeholder2026avibench} provides a systematic evaluation of human-like audio-visual intelligence in omni-MLLMs, probing capabilities such as cross-modal grounding, temporal synchronization, and multimodal commonsense reasoning.
+ByteDance Seed's Omni~\cite{seed2026omni} demonstrates that training with Context Unrolling---explicit reasoning across multiple modal representations before producing predictions---enables the model to aggregate complementary information across heterogeneous modalities, facilitating a more faithful approximation of shared multimodal knowledge.
+
+\paragraph{Video understanding.}
+Video presents unique challenges: extended temporal context (minutes to hours), fine-grained temporal reasoning, and sparse relevant information.
+Qwen3.5-Omni~\cite{qwen2026omni} supports over 10 hours of audio understanding and 400 seconds of 720P video at 1 FPS, enabling applications such as long-form video summarization and temporal question answering.
+StreamOV~\cite{placeholder2026streamov} tackles streaming video understanding through evidence-guided memory and response triggering, deciding when sufficient information has been accumulated to produce a response rather than processing the entire video.
+O-MARC~\cite{placeholder2026omarc} achieves efficient video understanding via memory-augmented compression distillation, compressing long video sequences into compact representations for downstream reasoning.
+OmniCap-IF~\cite{placeholder2026omnicapif} benchmarks and improves instruction-following for omni-video captioning, addressing the gap between holistic video understanding and strict adherence to complex user instructions.
+VideoOdyssey~\cite{placeholder2026videoodyssey} extends the temporal horizon further, providing a benchmark for ultra-long-context omni-modal video understanding.
+
+\paragraph{Modality interaction and reasoning.}
+Understanding \emph{how} modalities interact---rather than merely \emph{that} they can be processed jointly---is an emerging frontier.
+Partial Information Decomposition (PID)~\cite{placeholder2026pid} provides a decision-level framework that separates the unique, redundant, and synergistic contributions of different modalities.
+Strikingly, PID reveals that much of what appears to be multimodal reasoning may actually be driven by a single dominant modality, with cross-modal synergy contributing far less than expected.
+This diagnostic insight is crucial for designing training strategies that genuinely foster cross-modal integration rather than enabling unimodal shortcuts~\cite{placeholder2026stagedposttraining}.
+Agentic Active Omni-Modal Perception~\cite{placeholder2026agenticperception} tackles multi-hop audio-visual reasoning, where evidence is sparse, temporally dispersed, and distributed across both audio and visual streams, requiring the model to actively seek out and aggregate information across modalities.
 
 \subsection{Any-to-Any Generation}
 
+A defining promise of omni-modal models is the ability to generate content in any supported modality given input in any modality---\emph{any-to-any generation}.
+This capability remains substantially less mature than understanding, but rapid progress is being made across several fronts.
+
+\paragraph{Audio generation.}
+Audio generation spans speech synthesis, music, sound effects, and environmental sounds.
+Qwen3.5-Omni's Talker module~\cite{qwen2026omni}, powered by the ARIA alignment mechanism, generates streaming speech with human-like emotional nuance across 10 languages, dynamically aligning text and speech units to ensure natural prosody with minimal latency.
+The model supports multilingual speech generation and has demonstrated a novel emergent capability termed \emph{Audio-Visual Vibe Coding}---directly performing coding tasks based on audio-visual instructions.
+
+\paragraph{Joint audio-video generation.}
+Generating synchronized audio and video is particularly challenging because the two modalities must be temporally aligned at fine granularity.
+Foley-Omni~\cite{placeholder2026foleyomni} presents a unified model that spans from task-level audio synthesis (speech, sound effects, music) to complete video soundtrack generation, addressing the real-world need for jointly consistent audio tracks in video production.
+Omni-Customizer~\cite{placeholder2026omnicustomizer} tackles end-to-end multimodal customization for joint audio-video generation, enabling the simultaneous preservation of visual identities and vocal timbres across multiple interacting subjects.
+Inference-time scaling techniques~\cite{placeholder2026infertimescale} have recently been shown to improve joint audio-video generation quality without additional training, by allocating more computation at inference time to refine both temporal synchronization and semantic alignment.
+
+\paragraph{Long-form video generation.}
+Video generation at scale introduces planning challenges distinct from single-frame image generation.
+VideoWeaver~\cite{placeholder2026videoweaver} explores agentic long video generation, where an agent framework---leveraging tool use and orchestration capabilities---builds and refines its own video generation workflow, evaluating and evolving generation skills over extended video sequences.
+MTAVG-Bench 2.0~\cite{placeholder2026mtavbench} diagnoses failure modes of cinematic expressiveness in multi-talker audio-video generation, revealing specific weaknesses in character consistency, emotional expression, and cross-modal synchronization.
+
+\paragraph{Unified generation architectures.}
+Several recent efforts aim to unify generation across modalities under a single architecture.
+FlowInOne~\cite{placeholder2026flowinone} reformulates multimodal generation as image-in, image-out flow matching, providing a unified framework for diverse generation tasks.
+Dynin-Omni~\cite{placeholder2026dyninomni} explores unified diffusion language models capable of generating across modalities within a single model.
+While fully unified any-to-any generation remains an open challenge, these efforts represent important architectural steps toward consolidating what are currently separate generation pipelines.
+
 \subsection{Real-Time Interaction}
+
+Beyond offline understanding and generation, the most transformative omni-modal capability is real-time, full-duplex interaction---the model simultaneously listens, sees, thinks, and speaks, much like a human conversation partner.
+
+\paragraph{Full-duplex multimodal interaction.}
+DuplexOmni~\cite{placeholder2026duplexomni} represents the state of the art in real-time multimodal full-duplex interaction, combining seamless real-time perception with complex reasoning and tool use.
+Unlike traditional turn-based systems that process one modality at a time, DuplexOmni enables continuous listening, seeing, thinking, and speaking, supporting interruptions, barge-in, and dynamic turn-taking---capabilities essential for natural human-AI interaction.
+The key technical challenge is maintaining low end-to-end latency while simultaneously processing multiple modalities and executing tool calls, which DuplexOmni addresses through an optimized streaming architecture.
+
+\paragraph{Streaming speech and low-latency interaction.}
+Qwen3.5-Omni's ARIA mechanism~\cite{qwen2026omni} specifically addresses the encoding efficiency gap between text and speech tokenizers that causes instability and unnaturalness in streaming speech synthesis.
+By dynamically aligning text and speech units, ARIA achieves stable, natural prosody in conversational speech with minimal latency impact.
+The model's ability to understand over 10 hours of continuous audio while responding with sub-second latency demonstrates that long-context understanding and real-time interaction are not mutually exclusive.
+
+\paragraph{Evaluation of real-time capabilities.}
+Omni-DuplexEval~\cite{placeholder2026omniduplexeval} provides a dedicated benchmark for evaluating real-time duplex omni-modal interaction, measuring not just response quality but also temporal properties such as latency, turn-taking accuracy, and interruption handling.
+OmniPro~\cite{placeholder2026omnipro} complements this with a benchmark for proactive streaming video understanding, where the model must anticipate when to respond based on accumulating visual evidence, rather than passively processing the entire stream.
+These evaluation frameworks are critical for moving real-time omni interaction from a qualitative demonstration to a quantitatively measurable capability.
 
 % ============================================================
 \section{Evaluation}
