@@ -199,5 +199,5 @@ Writing was assisted by Claude Code with [ml-paper-writing](https://github.com/o
 ---
 
 <p align="center">
-  <sub>Built with ❤️ and LaTeX | ICML 2026 Template | Work in Progress</sub>
+  <sub>Built with ❤️ and LaTeX | Work in Progress</sub>
 </p>
