@@ -13,8 +13,6 @@
 </h3>
 
 <p align="center">
-  <b>Target Venue:</b> ICML / AAAI &nbsp;|&nbsp;
-  <b>Template:</b> ICML 2026 &nbsp;|&nbsp;
   <b>Last Updated:</b> June 2026
 </p>
 
